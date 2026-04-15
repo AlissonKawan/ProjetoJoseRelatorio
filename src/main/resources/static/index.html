@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatórios</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      border-radius: 8px;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #45a049;
+    }
+
+    .resultado {
+      margin-top: 20px;
+      background: #1e1e1e;
+      padding: 15px;
+      border-radius: 8px;
+    }
+
+    .resultado p {
+      margin: 5px 0;
+      font-size: 18px;
+    }
+
+    .erro {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>📊 Relatórios</h1>
+
+<textarea id="texto" placeholder="Cole aqui o relatório..."></textarea>
+
+<button onclick="enviar()">Calcular</button>
+
+<div class="resultado" id="resultado" style="display:none;">
+  <p><b>KM Total:</b> <span id="km"></span></p>
+  <p><b>Horas extras:</b> <span id="minutos"></span></p>
+  <p><b>Valor das horas extras totais:</b> R$ <span id="valor"></span></p>
+</div>
+
+<p class="erro" id="erro"></p>
+
+<script>
+  async function enviar() {
+    const texto = document.getElementById("texto").value;
+
+    if (!texto.trim()) {
+      document.getElementById("erro").innerText = "Cole um relatório primeiro!";
+      return;
+    }
+
+    document.getElementById("erro").innerText = "";
+
+    try {
+      const response = await fetch("/relatorios", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify([texto])
+      });
+
+      const data = await response.text();
+
+      // QUEBRAR RESPOSTA STRING (se ainda estiver usando string)
+      const partes = data.split("|");
+
+      const km = partes[0].replace("KM:", "").trim();
+      const minutosNumero = parseInt(partes[1].replace("Minutos:", "").trim());
+
+      const horas = Math.floor(minutosNumero / 60);
+      const resto = minutosNumero % 60;
+
+      const minutosFormatado = `${horas}h ${resto}min`;
+      const valor = partes[2].replace("Valor:", "").trim();
+
+      document.getElementById("km").innerText = km;
+      document.getElementById("minutos").innerText = minutosFormatado;
+      document.getElementById("valor").innerText = valor;
+
+      document.getElementById("resultado").style.display = "block";
+
+    } catch (error) {
+      document.getElementById("erro").innerText = "Erro ao processar.";
+    }
+  }
+</script>
+
+</body>
+</html>
