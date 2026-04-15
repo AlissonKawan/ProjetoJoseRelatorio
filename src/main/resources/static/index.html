@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Relatórios</title>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #121212;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e1e1e, #121212);
       color: white;
       padding: 20px;
       max-width: 600px;
@@ -16,48 +17,86 @@
 
     h1 {
       text-align: center;
+      margin-bottom: 20px;
     }
 
     textarea {
       width: 100%;
-      height: 200px;
-      border-radius: 8px;
+      height: 180px;
+      border-radius: 12px;
       border: none;
-      padding: 10px;
+      padding: 12px;
       font-size: 14px;
+      background: #2a2a2a;
+      color: white;
+      resize: none;
+    }
+
+    textarea:focus {
+      outline: 2px solid #4CAF50;
     }
 
     button {
       width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      background: #4CAF50;
+      padding: 14px;
+      margin-top: 12px;
+      background: linear-gradient(135deg, #4CAF50, #2e7d32);
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       font-size: 16px;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     button:hover {
-      background: #45a049;
+      transform: scale(1.02);
     }
 
-    .resultado {
+    button:disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
+
+    .card {
       margin-top: 20px;
-      background: #1e1e1e;
-      padding: 15px;
-      border-radius: 8px;
+      background: #1f1f1f;
+      padding: 20px;
+      border-radius: 12px;
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
     }
 
-    .resultado p {
-      margin: 5px 0;
+    .linha {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
       font-size: 18px;
     }
 
+    .label {
+      color: #aaa;
+    }
+
+    .valor {
+      font-weight: bold;
+    }
+
     .erro {
-      color: red;
+      color: #ff5252;
       margin-top: 10px;
+      text-align: center;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 10px;
+      color: #aaa;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
@@ -68,12 +107,23 @@
 
 <textarea id="texto" placeholder="Cole aqui o relatório..."></textarea>
 
-<button onclick="enviar()">Calcular</button>
+<button id="btn" onclick="enviar()">Calcular</button>
 
-<div class="resultado" id="resultado" style="display:none;">
-  <p><b>KM Total:</b> <span id="km"></span></p>
-  <p><b>Horas extras:</b> <span id="minutos"></span></p>
-  <p><b>Valor das horas extras totais:</b> R$ <span id="valor"></span></p>
+<div class="loading" id="loading"></div>
+
+<div class="card" id="resultado">
+  <div class="linha">
+    <span class="label">KM Total</span>
+    <span class="valor" id="km"></span>
+  </div>
+  <div class="linha">
+    <span class="label">Horas extras</span>
+    <span class="valor" id="minutos"></span>
+  </div>
+  <div class="linha">
+    <span class="label">Valor</span>
+    <span class="valor">R$ <span id="valor"></span></span>
+  </div>
 </div>
 
 <p class="erro" id="erro"></p>
@@ -81,6 +131,7 @@
 <script>
   async function enviar() {
     const texto = document.getElementById("texto").value;
+    const btn = document.getElementById("btn");
 
     if (!texto.trim()) {
       document.getElementById("erro").innerText = "Cole um relatório primeiro!";
@@ -88,6 +139,8 @@
     }
 
     document.getElementById("erro").innerText = "";
+    document.getElementById("loading").innerText = "Processando...";
+    btn.disabled = true;
 
     try {
       const response = await fetch("/relatorios", {
@@ -100,7 +153,6 @@
 
       const data = await response.text();
 
-      // QUEBRAR RESPOSTA STRING (se ainda estiver usando string)
       const partes = data.split("|");
 
       const km = partes[0].replace("KM:", "").trim();
@@ -117,10 +169,14 @@
       document.getElementById("valor").innerText = valor;
 
       document.getElementById("resultado").style.display = "block";
+      document.getElementById("loading").innerText = "";
 
     } catch (error) {
       document.getElementById("erro").innerText = "Erro ao processar.";
+      document.getElementById("loading").innerText = "";
     }
+
+    btn.disabled = false;
   }
 </script>
 
